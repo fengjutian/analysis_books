@@ -18,7 +18,6 @@ async def root():
 
 @app.post("/companies/", response_model=schemas.CompanyOut)
 async def create_company(company: schemas.CompanyCreate, session=Depends(get_session)):
-    # 检查公司是否已存在
     existing_company = crud.get_company(session, company.company_id)
     if existing_company:
         raise HTTPException(status_code=400, detail="Company already exists")
