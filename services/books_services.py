@@ -5,19 +5,19 @@ class BookService:
         """
         self.driver = neo4j_driver
 
-    def create_book(self, book_id, title, author):
+    def create_book(self, title, author):
         """
-        创建书籍
-        :param book_id: 书籍ID
+        创建书籍，自动生成唯一的book_id
         :param title: 书籍标题
         :param author: 书籍作者
         :return: 新创建的书籍信息
         """
         with self.driver.session() as session:
-            # 检查书籍是否已存在
-            result = session.run("MATCH (b:Book {id: $book_id}) RETURN b", book_id=book_id)
-            if result.single():
-                return None
+            # 生成唯一的book_id (通过获取当前最大ID并加1)
+            result = session.run("MATCH (b:Book) RETURN COALESCE(MAX(b.id), 0) AS max_id")
+            max_id = result.single()['max_id']
+            book_id = max_id + 1
+            
             # 创建新书籍
             result = session.run(
                 "CREATE (b:Book {id: $book_id, title: $title, author: $author}) RETURN b",

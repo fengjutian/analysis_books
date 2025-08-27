@@ -10,9 +10,14 @@ router = APIRouter(
 )
 
 class Book(BaseModel):
-    id: int
     title: str
     author: str
+
+class BookResponse(Book):
+    id: int
+    
+    class Config:
+        from_attributes = True
 
 class BookUpdate(BaseModel):
     title: Optional[str] = None
@@ -21,20 +26,20 @@ class BookUpdate(BaseModel):
 # 创建一个全局的 BookService 实例，使用共享的neo4j驱动
 book_service = books_services.BookService(driver)
 
-@router.post("/", response_model=Book)
+@router.post("/", response_model=BookResponse)
 async def create_book(book: Book):
-    """创建新书籍"""
-    result = book_service.create_book(book.id, book.title, book.author)
+    """创建新书籍，自动生成唯一ID"""
+    result = book_service.create_book(book.title, book.author)
     if result is None:
-        raise HTTPException(status_code=400, detail="Book with this ID already exists")
+        raise HTTPException(status_code=400, detail="Failed to create book")
     return result
 
-@router.get("/", response_model=List[Book])
+@router.get("/", response_model=List[BookResponse])
 async def get_all_books():
     """获取所有书籍"""
     return book_service.get_all_books()
 
-@router.get("/{book_id}", response_model=Book)
+@router.get("/{book_id}", response_model=BookResponse)
 async def get_book(book_id: int):
     """根据ID获取书籍"""
     result = book_service.get_book(book_id)
@@ -42,7 +47,7 @@ async def get_book(book_id: int):
         raise HTTPException(status_code=404, detail="Book not found")
     return result
 
-@router.put("/{book_id}", response_model=Book)
+@router.put("/{book_id}", response_model=BookResponse)
 async def update_book(book_id: int, book: BookUpdate):
     """更新书籍信息"""
     result = book_service.update_book(book_id, book.title, book.author)
