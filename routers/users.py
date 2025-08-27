@@ -46,9 +46,6 @@ async def get_user(user_id: int):
 async def create_user(user: User):
     """创建新用户"""
     services = users_services.UserService(driver)
-    # Create the user in Neo4j with the provided data
-    # We'll need to extract age from somewhere or set a default
-    # For now, let's set a default age of 30
     user_node = services.create_user(str(user.id), user.name, 30)
     
     # Convert Neo4j node to User model format
