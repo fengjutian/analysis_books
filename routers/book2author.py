@@ -27,7 +27,6 @@ def create_book_author_relation(data: BookAuthor):
         record = result.single()
     return {"book": record["book"], "author": record["author"]}
 
-# get books by author name
 
 @router.get("/author/{author_name}")
 def get_books_by_author(author_name: str):
