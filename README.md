@@ -113,3 +113,12 @@ API documentation (Swagger UI) will be available at `http://127.0.0.1:8000/docs`
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern, fast (high-performance) web framework for building APIs
 - [Neo4j](https://neo4j.com/) - Graph database for storing company relationships
 - [Uvicorn](https://www.uvicorn.org/) - ASGI server implementation
+
+
+## 删除节点及其关系
+
+```
+MATCH (n:Book {id: 4})
+DETACH DELETE n
+
+```
