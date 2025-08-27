@@ -12,6 +12,12 @@ router = APIRouter(
 class AuthorBase(BaseModel):
     name: str
     email: str
+    gender: str
+    birth_date: str
+    birth_place: str
+    family_members: str # 家庭成员
+    imdb_id: str # IMDb编号
+    occupation: str # 职业
 
 class AuthorCreate(AuthorBase):
     pass
@@ -22,10 +28,6 @@ class Author(AuthorBase):
     class Config:
         from_attributes = True
 
-fake_authors_db = [
-    Author(id=1, name="Alice", email="alice@example.com"),
-    Author(id=2, name="Bob", email="bob@example.com"),
-]
 
 @router.get("/", response_model=List[Author])
 async def list_authors():
@@ -38,7 +40,13 @@ async def list_authors():
         result.append({
             "id": item["id"],
             "name": item["name"],
-            "email": item["email"]
+            "email": item["email"],
+            "gender": item["gender"],
+            "birth_date": item["birth_date"],
+            "birth_place": item["birth_place"],
+            "family_members": item["family_members"],
+            "imdb_id": item["imdb_id"],
+            "occupation": item["occupation"]
         })
     return result
 
@@ -52,23 +60,44 @@ async def get_author(author_id: int):
     
     # Convert Neo4j node to Author model format
     author_dict = {
-        "id": int(author_node["user_id"]),
+        "id": int(author_node["author_id"]),
         "name": author_node["name"],
-        "email": f"{author_node['name'].lower()}@example.com"
+        "email": author_node.get("email", f"{author_node['name'].lower()}@example.com"),
+        "gender": author_node.get("gender", ""),
+        "birth_date": author_node.get("birth_date", ""),
+        "birth_place": author_node.get("birth_place", ""),
+        "family_members": author_node.get("family_members", ""),
+        "imdb_id": author_node.get("imdb_id", ""),
+        "occupation": author_node.get("occupation", "")
     }
-    return author_dict
+    return author_dict  
 
 @router.post("/", response_model=Author)
 async def create_author(author: AuthorCreate):
     """创建新作者，author_id将自动生成"""
     services = author_services.AuthorService(driver)
-    author_node = services.create_author(author.name, 30)  # 使用用户服务创建数据
+    author_node = services.create_author(
+        name=author.name,
+        email=author.email,
+        gender=author.gender,
+        birth_date=author.birth_date,
+        birth_place=author.birth_place,
+        family_members=author.family_members,
+        imdb_id=author.imdb_id,
+        occupation=author.occupation
+    )  # 使用用户服务创建数据
     
     # Convert Neo4j node to Author model format
     author_dict = {
         "id": int(author_node["author_id"]),
         "name": author_node["name"],
-        "email": author.email  # Keep the provided email
+        "email": author_node["email"],
+        "gender": author_node["gender"],
+        "birth_date": author_node["birth_date"],
+        "birth_place": author_node["birth_place"],
+        "family_members": author_node["family_members"],
+        "imdb_id": author_node["imdb_id"],
+        "occupation": author_node["occupation"]
     }
     return author_dict
 
