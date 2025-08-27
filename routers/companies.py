@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.db import get_session
-from app import crud, schemas
+from app import schemas
+from services import companies_services
 
 router = APIRouter(
     prefix="/companies",       # 路由前缀
@@ -10,15 +11,15 @@ router = APIRouter(
 # 创建公司
 @router.post("/", response_model=schemas.CompanyOut)
 async def create_company(company: schemas.CompanyCreate, session=Depends(get_session)):
-    existing_company = crud.get_company(session, company.company_id)
+    existing_company = companies_services.get_company(session, company.company_id)
     if existing_company:
         raise HTTPException(status_code=400, detail="Company already exists")
-    return crud.create_company(session, company)
+    return companies_services.create_company(session, company)
 
 # 获取公司
 @router.get("/{company_id}", response_model=schemas.CompanyOut)
 async def get_company(company_id: str, session=Depends(get_session)):
-    result = crud.get_company(session, company_id)
+    result = companies_services.get_company(session, company_id)
     if not result:
         raise HTTPException(status_code=404, detail="Company not found")
     return result
@@ -26,7 +27,7 @@ async def get_company(company_id: str, session=Depends(get_session)):
 # 更新公司
 @router.put("/{company_id}", response_model=schemas.CompanyOut)
 async def update_company(company_id: str, company: schemas.CompanyCreate, session=Depends(get_session)):
-    result = crud.update_company(session, company_id, company)
+    result = companies_services.update_company(session, company_id, company)
     if not result:
         raise HTTPException(status_code=404, detail="Company not found")
     return result
@@ -34,7 +35,7 @@ async def update_company(company_id: str, company: schemas.CompanyCreate, sessio
 # 删除公司
 @router.delete("/{company_id}")
 async def delete_company(company_id: str, session=Depends(get_session)):
-    result = crud.delete_company(session, company_id)
+    result = companies_services.delete_company(session, company_id)
     if not result:
         raise HTTPException(status_code=404, detail="Company not found")
     return {"message": "Company deleted"}

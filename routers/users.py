@@ -1,4 +1,4 @@
-# routers/users.py
+from venv import logger
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
@@ -24,6 +24,7 @@ fake_users_db = [
 @router.get("/", response_model=List[User])
 async def list_users():
     """获取所有用户"""
+    logger.info("获取所有用户")
     return fake_users_db
 
 @router.get("/{user_id}", response_model=User)
