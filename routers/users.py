@@ -9,10 +9,18 @@ router = APIRouter(
     tags=["users"],        # 文档分类标签
 )
 
-class User(BaseModel):
-    id: int
+class UserBase(BaseModel):
     name: str
     email: str
+
+class UserCreate(UserBase):
+    pass
+
+class User(UserBase):
+    id: int
+
+    class Config:
+        from_attributes = True
 
 fake_users_db = [
     User(id=1, name="Alice", email="alice@example.com"),
@@ -43,10 +51,10 @@ async def get_user(user_id: int):
     return user_dict
 
 @router.post("/", response_model=User)
-async def create_user(user: User):
-    """创建新用户"""
+async def create_user(user: UserCreate):
+    """创建新用户，user_id将自动生成"""
     services = users_services.UserService(driver)
-    user_node = services.create_user(str(user.id), user.name, 30)
+    user_node = services.create_user(user.name, 30)  # 不再传递user_id参数
     
     # Convert Neo4j node to User model format
     user_dict = {

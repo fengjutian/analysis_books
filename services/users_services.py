@@ -6,18 +6,25 @@ class UserService:
         """
         self.driver = neo4j_driver
 
-    def create_user(self, user_id, name, age):
+    def create_user(self, name, age):
         """
         创建用户节点
-        :param user_id: 用户 ID
         :param name: 用户名
         :param age: 用户年龄
         :return: 创建的用户节点
         """
         with self.driver.session() as session:
+            # 自动生成唯一ID：查询当前最大ID并加1
+            result = session.run(
+                "MATCH (u:User) RETURN COALESCE(MAX(toInteger(u.user_id)), 0) as max_id"
+            )
+            max_id = result.single()['max_id']
+            new_id = str(max_id + 1)
+            
+            # 创建新用户
             result = session.run(
                 "CREATE (u:User {user_id: $user_id, name: $name, age: $age}) RETURN u",
-                user_id=user_id, name=name, age=age
+                user_id=new_id, name=name, age=age
             )
             return result.single()[0]
 
