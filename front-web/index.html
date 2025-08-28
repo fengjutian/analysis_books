@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <title>D3 知识图谱</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { margin:0; height:100%; background:#0b1020; color:#e6e6e6; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    #app { width:100vw; height:100vh;}
+    .link { stroke:#96a3; stroke-opacity:.6; }
+    .link.highlight { stroke:#fff; stroke-opacity:1; }
+    .node { cursor:grab; }
+    .node:active { cursor:grabbing; }
+    .label { font-size:12px; pointer-events:none; fill:#cfd3dc; }
+    .halo { fill:#0b1020; fill-opacity:.5; }
+    .tooltip {
+      position: fixed; pointer-events:none; padding:6px 8px; font-size:12px;
+      background: rgba(20,24,40,.95); color:#fff; border:1px solid #2b314f; border-radius:6px;
+      transform: translate(10px, 10px); display:none;
+    }
+    .legend { position: fixed; left: 12px; top: 12px; background:#121933cc; padding:8px 10px; border:1px solid #2b314f; border-radius:8px; font-size:12px;}
+    .search { position: fixed; right: 12px; top: 12px; }
+    .search input{
+      width: 220px; padding:8px 10px; background:#121933; color:#e6e6e6;
+      border-radius:8px; border:1px solid #2b314f; outline:none;
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<div class="legend" id="legend"></div>
+<div class="search"><input id="kw" placeholder="搜索节点（id/label）..." /></div>
+<div class="tooltip" id="tip"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script>
+/** ====== Demo 数据（替换为你的接口返回） ====== */
+const demo = {
+  nodes: [
+    { id: "公司A", group: "Company", score: 0.9 },
+    { id: "张三",   group: "Person",  score: 0.7 },
+    { id: "李四",   group: "Person",  score: 0.6 },
+    { id: "产品X", group: "Product", score: 0.5 },
+    { id: "城市Z", group: "Place",   score: 0.4 }
+  ],
+  links: [
+    { source: "张三", target: "公司A", type: "就职", weight: 2 },
+    { source: "李四", target: "公司A", type: "就职", weight: 1 },
+    { source: "公司A", target: "产品X", type: "生产", weight: 3 },
+    { source: "张三", target: "城市Z", type: "居住", weight: 1 }
+  ]
+};
+
+/** ====== 颜色与尺寸编码 ====== */
+const color = d3.scaleOrdinal()
+  .domain(["Person","Company","Product","Place"])
+  .range(d3.schemeTableau10);
+
+const size = d3.scaleSqrt().domain([0,1]).range([6,16]);
+
+/** ====== 初始化画布 ====== */
+const app = document.getElementById('app');
+const width = app.clientWidth, height = app.clientHeight;
+
+const svg = d3.select('#app').append('svg')
+  .attr('width', width).attr('height', height);
+
+const defs = svg.append('defs');
+defs.append('marker')
+  .attr('id','arrow').attr('viewBox','0 -5 10 10')
+  .attr('refX', 18).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6)
+  .attr('orient','auto')
+  .append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#9bb3');
+
+const g = svg.append('g'); // zoom 容器
+const linkG = g.append('g').attr('stroke-width',1.5);
+const nodeG = g.append('g');
+const labelG= g.append('g');
+const tip = document.getElementById('tip');
+
+/** ====== 力导向布局 ====== */
+const sim = d3.forceSimulation()
+  .force('link', d3.forceLink().id(d=>d.id).distance(d=>60 + 30*(3-(d.weight||1))).strength(0.5))
+  .force('charge', d3.forceManyBody().strength(-250))
+  .force('collide', d3.forceCollide().radius(d=>size(d.score||0)+6))
+  .force('center', d3.forceCenter(width/2, height/2));
+
+/** ====== 渲染函数（可重复调用以动态更新） ====== */
+function render(data){
+  // Links
+  const links = linkG.selectAll('line').data(data.links, d=>d.source.id? d.source.id+'->'+d.target.id : d.source+'->'+d.target);
+  links.exit().remove();
+  const linksEnter = links.enter().append('line')
+    .attr('class','link')
+    .attr('marker-end','url(#arrow)');
+  const linkSel = linksEnter.merge(links);
+
+  // Link labels（关系类型）
+  const linkLabels = labelG.selectAll('text.linklbl').data(data.links, d=>d.source.id? d.source.id+'|'+d.type+'|'+d.target.id : d.source+'|'+d.type+'|'+d.target);
+  linkLabels.exit().remove();
+  const linkLabelsEnter = linkLabels.enter().append('text')
+      .attr('class','label linklbl')
+      .attr('dy', -4)
+      .text(d=>d.type);
+  const linkLabelSel = linkLabelsEnter.merge(linkLabels);
+
+  // Nodes
+  const nodes = nodeG.selectAll('g.node').data(data.nodes, d=>d.id);
+  nodes.exit().remove();
+  const nodesEnter = nodes.enter().append('g').attr('class','node')
+    .call(d3.drag()
+      .on('start', (event,d)=>{ if(!event.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag', (event,d)=>{ d.fx=event.x; d.fy=event.y; })
+      .on('end',   (event,d)=>{ if(!event.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }))
+    .on('mouseenter', (event,d)=>{
+      tip.style.display='block';
+      tip.innerHTML = `<b>${d.id}</b><br/>类型：${d.group||'-'}<br/>score：${d.score??'-'}`;
+      highlightNeighbors(d, true);
+    })
+    .on('mousemove', (event)=>{ tip.style.left=event.clientX+'px'; tip.style.top=event.clientY+'px'; })
+    .on('mouseleave', (event,d)=>{ tip.style.display='none'; highlightNeighbors(d, false); })
+    .on('click', (_,d)=> focusNode(d));
+
+  nodesEnter.append('circle')
+    .attr('r', d=>size(d.score||0))
+    .attr('fill', d=>color(d.group))
+    .attr('stroke','#ccd2')
+    .attr('stroke-width',1.5);
+
+  nodesEnter.append('text')
+    .attr('class','label')
+    .attr('text-anchor','middle')
+    .attr('dy', d=> size(d.score||0)+12)
+    .text(d=>d.id);
+
+  const nodeSel = nodesEnter.merge(nodes);
+
+  // legend
+  const groups = Array.from(new Set(data.nodes.map(d=>d.group))).filter(Boolean);
+  document.getElementById('legend').innerHTML =
+    `<b>图例</b><br/>` + groups.map(g=>`<span style="display:inline-block;width:10px;height:10px;background:${color(g)};margin-right:6px;border-radius:2px"></span>${g}`).join('<br/>');
+
+  // tick
+  sim.nodes(data.nodes).on('tick', ticked);
+  sim.force('link').links(data.links);
+  sim.alpha(1).restart();
+
+  function ticked(){
+    linkSel
+      .attr('x1', d=>d.source.x).attr('y1', d=>d.source.y)
+      .attr('x2', d=>d.target.x).attr('y2', d=>d.target.y);
+
+    linkLabelSel
+      .attr('x', d=> (d.source.x + d.target.x)/2 )
+      .attr('y', d=> (d.source.y + d.target.y)/2 );
+
+    nodeSel.attr('transform', d=>`translate(${d.x},${d.y})`);
+  }
+
+  // 邻居高亮
+  const adj = new Map();
+  data.links.forEach(l=>{
+    const a=l.source.id||l.source, b=l.target.id||l.target;
+    (adj.get(a)||adj.set(a,new Set()).get(a)).add(b);
+    (adj.get(b)||adj.set(b,new Set()).get(b)).add(a);
+  });
+
+  function highlightNeighbors(node, on){
+    const id = node.id;
+    nodeSel.selectAll('circle').attr('opacity', n => on ? (n.id===id || adj.get(id)?.has(n.id) ? 1 : 0.15) : 1);
+    nodeSel.selectAll('text').attr('opacity', n => on ? (n.id===id || adj.get(id)?.has(n.id) ? 1 : 0.15) : 1);
+    linkSel.classed('highlight', l => on ? (l.source.id===id || l.target.id===id) : false)
+           .attr('opacity', l => on ? (l.source.id===id || l.target.id===id ? 1 : 0.1) : 1);
+    linkLabelSel.attr('opacity', l => on ? (l.source.id===id || l.target.id===id ? 1 : 0.1) : 1);
+  }
+
+  // 点击聚焦
+  function focusNode(d){
+    const k = 1.6; // 放大倍数
+    const tx = width/2 - d.x*k, ty = height/2 - d.y*k;
+    svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity.translate(tx,ty).scale(k));
+    highlightNeighbors(d, true);
+  }
+}
+
+// 缩放/平移
+const zoom = d3.zoom().scaleExtent([0.2, 8]).on('zoom', (event)=> g.attr('transform', event.transform));
+svg.call(zoom);
+
+// 搜索
+document.getElementById('kw').addEventListener('input', (e)=>{
+  const kw = e.target.value.trim().toLowerCase();
+  g.selectAll('g.node').attr('opacity', d => {
+    if(!kw) return 1;
+    return (d.id.toLowerCase().includes(kw) || (d.group||'').toLowerCase().includes(kw)) ? 1 : 0.15;
+  });
+});
+
+// 初始渲染
+render(demo);
+
+/** ====== 动态更新示例（替换数据源即可） ====== */
+// 例如从你的后端获取：fetch('/api/graph').then(r=>r.json()).then(render);
+</script>
+</body>
+</html>
