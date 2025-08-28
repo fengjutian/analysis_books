@@ -126,6 +126,11 @@
         console.log('点击了节点:', params.data);
         alert('节点：' + params.data.name);
       }
+
+      if (params.dataType === 'edge') {
+        console.log('点击了边:', params.data);
+        alert('边：' + params.data.source + ' -> ' + params.data.target);
+      }
     });
 
     // 搜索函数
@@ -147,6 +152,24 @@
 
       target.itemStyle = { borderColor: '#fff', borderWidth: 4, shadowBlur: 20, shadowColor: '#fff' };
       target.symbolSize = (target.symbolSize || 30) * 1.5;
+
+      // // 找到邻居节点和边
+      // var neighbors = new Set();
+      // links.forEach(l => {
+      //   if (l.source === target.name || l.target === target.name) {
+      //     l.lineStyle = { color: '#ff4444', width: 3 }; // 高亮边
+      //     neighbors.add(l.source);
+      //     neighbors.add(l.target);
+      //   }
+      // });
+
+      // // 高亮邻居节点（但比目标节点弱）
+      // nodes.forEach(n => {
+      //   if (neighbors.has(n.name) && n.name !== target.name) {
+      //     n.itemStyle = { borderColor: '#ff4444', borderWidth: 2 };
+      //     n.symbolSize = (n.symbolSize || 30) * 1.2;
+      //   }
+      // });
 
       render();
 
