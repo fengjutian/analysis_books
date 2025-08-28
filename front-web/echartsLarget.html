@@ -78,6 +78,7 @@
       },
       animation: true, // 提升性能
       legend: [{ data: categories.map(c => c.name) }],
+      animationDuration: 2500,
       series: [
         {
         //   legendHoverLink: false,
@@ -108,7 +109,7 @@
             edgeLength: [50, 200], // 边的理想长度范围
             gravity: 0.1,      // 向心力，避免节点飞太远
             layoutAnimation: true
-          }
+          },
         }
       ]
     };
@@ -134,51 +135,66 @@
     });
 
     // 搜索函数
+    // function searchNode() {
+
+
+    //   var keyword = document.getElementById('searchBox').value.trim();
+    //   if (!keyword) return;
+
+    //   // 重置样式
+    //   nodes.forEach(n => { n.itemStyle = null; n.symbolSize = n.symbolSize || 30; });
+
+    //   // 找到目标节点并高亮
+    //   var target = nodes.find(n => n.name.includes(keyword));
+    //   if (!target) {
+    //     alert('未找到节点: ' + keyword);
+    //     return;
+    //   }
+
+    //   target.itemStyle = { borderColor: '#fff', borderWidth: 4, shadowBlur: 20, shadowColor: '#fff' };
+    //   target.symbolSize = (target.symbolSize || 30) * 1.5;
+
+    //   render();
+
+    //   // 定位到节点
+    //   var idx = nodes.indexOf(target);
+    //   chart.dispatchAction({
+    //     type: 'showTip',
+    //     seriesIndex: 0,
+    //     dataIndex: idx
+    //   });
+    // }
+
+
     function searchNode() {
-
-
       var keyword = document.getElementById('searchBox').value.trim();
       if (!keyword) return;
-
-      // 重置样式
-      nodes.forEach(n => { n.itemStyle = null; n.symbolSize = n.symbolSize || 30; });
-
-      // 找到目标节点并高亮
-      var target = nodes.find(n => n.name.includes(keyword));
-      if (!target) {
+      // 找到节点下标
+      var seriesIndex = 0;
+      var dataIndex = nodes.findIndex(n => n.name === keyword);
+      if (dataIndex === -1) {
         alert('未找到节点: ' + keyword);
         return;
       }
 
-      target.itemStyle = { borderColor: '#fff', borderWidth: 4, shadowBlur: 20, shadowColor: '#fff' };
-      target.symbolSize = (target.symbolSize || 30) * 1.5;
+      // 先取消所有高亮（避免残留）
+      chart.dispatchAction({
+        type: 'downplay',
+        seriesIndex: seriesIndex
+      });
 
-      // // 找到邻居节点和边
-      // var neighbors = new Set();
-      // links.forEach(l => {
-      //   if (l.source === target.name || l.target === target.name) {
-      //     l.lineStyle = { color: '#ff4444', width: 3 }; // 高亮边
-      //     neighbors.add(l.source);
-      //     neighbors.add(l.target);
-      //   }
-      // });
+      // 高亮目标节点 + 邻居
+      chart.dispatchAction({
+        type: 'highlight',
+        seriesIndex: seriesIndex,
+        dataIndex: dataIndex
+      });
 
-      // // 高亮邻居节点（但比目标节点弱）
-      // nodes.forEach(n => {
-      //   if (neighbors.has(n.name) && n.name !== target.name) {
-      //     n.itemStyle = { borderColor: '#ff4444', borderWidth: 2 };
-      //     n.symbolSize = (n.symbolSize || 30) * 1.2;
-      //   }
-      // });
-
-      render();
-
-      // 定位到节点
-      var idx = nodes.indexOf(target);
+      // 模拟鼠标悬浮到该节点，显示 tooltip
       chart.dispatchAction({
         type: 'showTip',
-        seriesIndex: 0,
-        dataIndex: idx
+        seriesIndex: seriesIndex,
+        dataIndex: dataIndex
       });
     }
   </script>
