@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ECharts 大规模知识图谱</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    #main {
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div style="padding:10px;background:#222;color:#fff;">
+    <input id="searchBox" type="text" placeholder="输入节点名称" style="padding:5px;width:200px;">
+    <button onclick="searchNode()">搜索</button>
+  </div>
+  <div id="main"></div>
+  <script>
+    var chart = echarts.init(document.getElementById('main'), 'dark');
+
+    chart.setOption({
+      backgroundColor: '#222222'
+    });
+
+    // 模拟数据
+    var categories = [
+      { name: '人物', itemStyle: { color: '#5470c6' } },
+      { name: '机构', itemStyle: { color: '#91cc75' } },
+      { name: '公司', itemStyle: { color: '#fac858' } },
+      { name: '作品', itemStyle: { color: '#ee6666' } }
+    ];
+
+    var nodes = [];
+    var links = [];
+
+    var N = 30;   // 节点数
+    var M = 50;   // 边数
+
+    for (var i = 0; i < N; i++) {
+      var category = Math.floor(Math.random() * categories.length);
+      nodes.push({
+        id: '' + i,
+        name: '节点' + i,
+        category: category,
+        x: Math.random() * 2000, // 随机坐标 (推荐后端预计算)
+        y: Math.random() * 2000,
+        symbolSize: 5 + Math.random() * 20 // 大小随机
+      });
+    }
+
+    for (var i = 0; i < M; i++) {
+      var s = Math.floor(Math.random() * N);
+      var t = Math.floor(Math.random() * N);
+      if (s !== t) {
+        links.push({
+          source: s,
+          target: t
+        });
+      }
+    }
+
+    var option = {
+      title: {
+        text: '大规模知识图谱（示例）',
+        left: 'left',
+      },
+      tooltip: {
+        show: true,
+        formatter: function (params) {
+          if (params.dataType === 'edge') {
+            return '关系';
+          } else {
+            return categories[params.data.category].name + '：' + params.data.name;
+          }
+        }
+      },
+      animation: true, // 提升性能
+      legend: [{ data: categories.map(c => c.name) }],
+      series: [
+        {
+        //   legendHoverLink: false,
+          type: 'graph',
+        //   layout: 'none',  // 不跑力导向
+          layout: 'force',  // 不跑力导向
+          data: nodes,
+          links: links,
+          categories: categories,
+          roam: true,  // 缩放、拖拽
+          zoom: 2.2,   // 初始缩放比例
+          // center: [500, 500], // 初始居中
+          label: { show: false }, // 节点标签太多，不显示
+          lineStyle: {
+            width: 0.5,
+            curveness: 0.3,  // 关键：设置曲率，0~1之间
+            opacity: 0.3
+          },
+          emphasis: {
+            focus: 'adjacency', // 高亮邻居
+            lineStyle: {
+              width: 2,
+              opacity: 0.8
+            }
+          },
+          force: {
+            repulsion: 80,    // 节点斥力，越大节点越分散
+            edgeLength: [50, 200], // 边的理想长度范围
+            gravity: 0.1,      // 向心力，避免节点飞太远
+            layoutAnimation: true
+          }
+        }
+      ]
+    };
+
+    function render() {
+      chart.setOption(option);
+    }
+
+    render()
+
+
+    chart.on('click', function (params) {
+      console.log("点击",params);
+      if (params.dataType === 'node') {
+        console.log('点击了节点:', params.data);
+        alert('节点：' + params.data.name);
+      }
+    });
+
+    // 搜索函数
+    function searchNode() {
+
+
+      var keyword = document.getElementById('searchBox').value.trim();
+      if (!keyword) return;
+
+      // 重置样式
+      nodes.forEach(n => { n.itemStyle = null; n.symbolSize = n.symbolSize || 30; });
+
+      // 找到目标节点并高亮
+      var target = nodes.find(n => n.name.includes(keyword));
+      if (!target) {
+        alert('未找到节点: ' + keyword);
+        return;
+      }
+
+      target.itemStyle = { borderColor: '#fff', borderWidth: 4, shadowBlur: 20, shadowColor: '#fff' };
+      target.symbolSize = (target.symbolSize || 30) * 1.5;
+
+      render();
+
+      // 定位到节点
+      var idx = nodes.indexOf(target);
+      chart.dispatchAction({
+        type: 'showTip',
+        seriesIndex: 0,
+        dataIndex: idx
+      });
+    }
+  </script>
+</body>
+</html>

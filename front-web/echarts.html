@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ECharts 知识图谱（多类型）</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    #main {
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="main"></div>
+  <script>
+    var chart = echarts.init(document.getElementById('main'));
+
+    var nodes = [
+      { id: '1', name: '张三', category: 0, symbolSize: 50 },
+      { id: '2', name: '李四', category: 0, symbolSize: 40 },
+      { id: '3', name: '某大学', category: 1, symbolSize: 60 },
+      { id: '4', name: '某公司', category: 2, symbolSize: 55 },
+      { id: '5', name: '《某本书》', category: 3, symbolSize: 45 }
+    ];
+
+    var links = [
+      { source: '1', target: '3', value: '就读', lineStyle: { color: '#5470c6' } },
+      { source: '2', target: '3', value: '就读', lineStyle: { color: '#5470c6' } },
+      { source: '1', target: '4', value: '工作', lineStyle: { color: '#91cc75' } },
+      { source: '2', target: '5', value: '作者', lineStyle: { color: '#fac858' } },
+      { source: '5', target: '4', value: '出版方', lineStyle: { color: '#ee6666' } }
+    ];
+
+    var option = {
+      title: {
+        text: '多类型知识图谱',
+        left: 'left'
+      },
+      tooltip: {
+        formatter: function (params) {
+          if (params.dataType === 'edge') {
+            return params.data.value;
+          } else {
+            return params.data.name;
+          }
+        }
+      },
+      legend: [
+        { data: ['人物', '机构', '公司', '作品'] }
+      ],
+      series: [
+        {
+          type: 'graph',
+          layout: 'force',
+          roam: true,
+          draggable: true,
+          categories: [
+            { name: '人物', itemStyle: { color: '#5470c6' } },
+            { name: '机构', itemStyle: { color: '#91cc75' } },
+            { name: '公司', itemStyle: { color: '#fac858' } },
+            { name: '作品', itemStyle: { color: '#ee6666' } }
+          ],
+          data: nodes,
+          links: links,
+          label: {
+            show: true
+          },
+          force: {
+            repulsion: 300,
+            edgeLength: 120
+          },
+          edgeLabel: {
+            show: true,
+            formatter: '{c}'
+          },
+          lineStyle: {
+            width: 2,
+            curveness: 0.2
+          }
+        }
+      ]
+    };
+
+    chart.setOption(option);
+  </script>
+</body>
+</html>
