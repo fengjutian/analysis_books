@@ -35,8 +35,8 @@
     var nodes = [];
     var links = [];
 
-    var N = 30;   // 节点数
-    var M = 50;   // 边数
+    var N = 10000;   // 节点数
+    var M = 10000;   // 边数
 
     for (var i = 0; i < N; i++) {
       var category = Math.floor(Math.random() * categories.length);
@@ -87,8 +87,8 @@
         {
         //   legendHoverLink: false,
           type: 'graph',
-          // layout: 'none',  // 不跑力导向
-          layout: 'force',  // 不跑力导向
+         // layout: 'none',  // 不跑力导向
+         layout: 'force',  // 不跑力导向
           data: nodes,
           links: links,
           categories: categories,
