@@ -33,9 +33,18 @@
         symbol: ['none', 'arrow'], // 起点无符号，终点为箭头
         symbolSize: [0, 10], // 起点符号大小为0，终点箭头大小为10
       },
-      { source: '1', target: '4', value: '工作', lineStyle: { color: '#91cc75' } },
-      { source: '2', target: '5', value: '作者', lineStyle: { color: '#fac858' } },
-      { source: '5', target: '4', value: '出版方', lineStyle: { color: '#ee6666' } }
+      { source: '1', target: '4', value: '工作', lineStyle: { color: '#91cc75' }, 
+        symbol: ['none', 'arrow'],
+        symbolSize: [0, 10],  },
+      { source: '2', target: '5', value: '作者', lineStyle: { color: '#fac858' }, symbol: ['none', 'arrow'],
+        symbolSize: [0, 10],  },
+      { source: '1', target: '5', value: '作者', lineStyle: { color: '#fac858' }, symbol: ['none', 'arrow'],
+        symbolSize: [0, 10],  },
+      { source: '4', target: '1', value: '属于', lineStyle: { color: '#fac858' }, symbol: ['none', 'arrow'],
+        symbolSize: [0, 10],  },
+      { source: '5', target: '4', value: '出版方', lineStyle: { color: '#ee6666' }, 
+      symbol: ['none', 'arrow'],
+        symbolSize: [0, 10],  }
     ];
 
     var option = {
