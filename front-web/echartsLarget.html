@@ -35,8 +35,8 @@
     var nodes = [];
     var links = [];
 
-    var N = 30;   // 节点数
-    var M = 50;   // 边数
+    var N = 300;   // 节点数
+    var M = 500;   // 边数
 
     for (var i = 0; i < N; i++) {
       var category = Math.floor(Math.random() * categories.length);
@@ -56,7 +56,9 @@
       if (s !== t) {
         links.push({
           source: s,
-          target: t
+          target: t,
+          // symbol: ['none', 'arrow'], // 起点无符号，终点为箭头
+          // symbolSize: [0, 5], // 
         });
       }
     }
@@ -94,7 +96,7 @@
           label: { show: false }, // 节点标签太多，不显示
           lineStyle: {
             width: 0.5,
-            curveness: 0.3,  // 关键：设置曲率，0~1之间
+            curveness: 0.1,  // 关键：设置曲率，0~1之间
             opacity: 0.3
           },
           emphasis: {
