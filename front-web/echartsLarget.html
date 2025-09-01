@@ -35,8 +35,8 @@
     var nodes = [];
     var links = [];
 
-    var N = 300;   // 节点数
-    var M = 500;   // 边数
+    var N = 30;   // 节点数
+    var M = 50;   // 边数
 
     for (var i = 0; i < N; i++) {
       var category = Math.floor(Math.random() * categories.length);
@@ -55,10 +55,12 @@
       var t = Math.floor(Math.random() * N);
       if (s !== t) {
         links.push({
+          value: 'link',
           source: s,
           target: t,
-          // symbol: ['none', 'arrow'], // 起点无符号，终点为箭头
-          // symbolSize: [0, 5], // 
+          symbol: ['none', 'arrow'], // 起点无符号，终点为箭头
+          symbolSize: [0, 3], // 
+          lineStyle: { color: '#5470c6' }
         });
       }
     }
@@ -85,7 +87,7 @@
         {
         //   legendHoverLink: false,
           type: 'graph',
-        //   layout: 'none',  // 不跑力导向
+          // layout: 'none',  // 不跑力导向
           layout: 'force',  // 不跑力导向
           data: nodes,
           links: links,
@@ -94,6 +96,10 @@
           zoom: 2.2,   // 初始缩放比例
           // center: [500, 500], // 初始居中
           label: { show: false }, // 节点标签太多，不显示
+          edgeLabel: {
+            show: false,
+            formatter: '{c}'
+          },
           lineStyle: {
             width: 0.5,
             curveness: 0.1,  // 关键：设置曲率，0~1之间
@@ -135,38 +141,6 @@
         alert('边：' + params.data.source + ' -> ' + params.data.target);
       }
     });
-
-    // 搜索函数
-    // function searchNode() {
-
-
-    //   var keyword = document.getElementById('searchBox').value.trim();
-    //   if (!keyword) return;
-
-    //   // 重置样式
-    //   nodes.forEach(n => { n.itemStyle = null; n.symbolSize = n.symbolSize || 30; });
-
-    //   // 找到目标节点并高亮
-    //   var target = nodes.find(n => n.name.includes(keyword));
-    //   if (!target) {
-    //     alert('未找到节点: ' + keyword);
-    //     return;
-    //   }
-
-    //   target.itemStyle = { borderColor: '#fff', borderWidth: 4, shadowBlur: 20, shadowColor: '#fff' };
-    //   target.symbolSize = (target.symbolSize || 30) * 1.5;
-
-    //   render();
-
-    //   // 定位到节点
-    //   var idx = nodes.indexOf(target);
-    //   chart.dispatchAction({
-    //     type: 'showTip',
-    //     seriesIndex: 0,
-    //     dataIndex: idx
-    //   });
-    // }
-
 
     function searchNode() {
       var keyword = document.getElementById('searchBox').value.trim();
